@@ -49,6 +49,9 @@ public class VerzikOverlay extends RoomOverlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
+		// Set the font before any text is measured or positioned, so every overlay uses the same one.
+		graphics.setFont(config.font().getFont());
+
 		if (verzik.isVerzikActive())
 		{
 			if (config.verzikTileOverlay())

@@ -49,6 +49,9 @@ public class XarpusOverlay extends RoomOverlay
 
 	public Dimension render(Graphics2D graphics)
 	{
+		// Set the font before any text is measured or positioned, so every overlay uses the same one.
+		graphics.setFont(config.font().getFont());
+
 		if (xarpus.isInstanceTimerRunning() && !xarpus.isExhumedSpawned() && xarpus.inRoomRegion(TheatrePlugin.XARPUS_REGION) && config.xarpusInstanceTimer())
 		{
 			Player player = client.getLocalPlayer();

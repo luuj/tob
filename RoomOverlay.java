@@ -14,7 +14,6 @@ import net.runelite.api.Point;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
-import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -67,12 +66,9 @@ public abstract class RoomOverlay extends Overlay
 	{
 		if (canvasPoint != null)
 		{
-			// deriveFont keeps the RuneScape typeface; new Font(font.toString(), ...) silently fell back to Dialog.
-			graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont(config.fontStyle().getFont(), (float) config.theatreFontSize()));
-			final Point canvasCenterPoint = new Point(canvasPoint.getX(), canvasPoint.getY());
-			final Point canvasCenterPoint_shadow = new Point(canvasPoint.getX() + 1, canvasPoint.getY() + 1);
-			OverlayUtil.renderTextLocation(graphics, canvasCenterPoint_shadow, txtString, Color.BLACK);
-			OverlayUtil.renderTextLocation(graphics, canvasCenterPoint, txtString, fontColor);
+			graphics.setFont(config.font().getFont());
+			// OverlayUtil already draws a black 1px shadow under the text.
+			OverlayUtil.renderTextLocation(graphics, canvasPoint, txtString, fontColor);
 		}
 	}
 
