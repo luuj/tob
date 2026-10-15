@@ -10,7 +10,7 @@ import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GroundObject;
 import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.api.Point;
 import net.runelite.api.Tile;
 import net.runelite.api.coords.WorldPoint;
@@ -95,8 +95,8 @@ public class Sotetseg extends Room
 		NPC npc = npcSpawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.SOTETSEG:
-			case NpcID.SOTETSEG_8388:
+			case NpcID.TOB_SOTETSEG_NONCOMBAT:
+			case NpcID.TOB_SOTETSEG_COMBAT:
 			case 10864:
 			case 10865:
 			case 10867:
@@ -113,13 +113,13 @@ public class Sotetseg extends Room
 		NPC npc = npcDespawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.SOTETSEG:
-			case NpcID.SOTETSEG_8388:
+			case NpcID.TOB_SOTETSEG_NONCOMBAT:
+			case NpcID.TOB_SOTETSEG_COMBAT:
 			case 10864:
 			case 10865:
 			case 10867:
 			case 10868:
-				if (client.getPlane() != 3)
+				if (client.getTopLevelWorldView().getPlane() != 3)
 				{
 					sotetsegActive = false;
 					sotetsegNPC = null;
@@ -157,7 +157,7 @@ public class Sotetseg extends Room
 		{
 			lastTick = System.currentTimeMillis();
 
-			if (sotetsegNPC != null && (sotetsegNPC.getId() == NpcID.SOTETSEG_8388 || sotetsegNPC.getId() == 10865 || sotetsegNPC.getId() == 10868))
+			if (sotetsegNPC != null && (sotetsegNPC.getId() == NpcID.TOB_SOTETSEG_COMBAT || sotetsegNPC.getId() == 10865 || sotetsegNPC.getId() == 10868))
 			{
 				if (sotetsegTickCount >= 0)
 				{

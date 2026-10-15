@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.theatre;
 
 import net.runelite.api.Client;
+import net.runelite.api.WorldView;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.apache.commons.lang3.ArrayUtils;
 import javax.inject.Inject;
@@ -39,7 +40,8 @@ public abstract class Room
 
 	public boolean inRoomRegion(Integer roomRegionId)
 	{
-		return ArrayUtils.contains(client.getMapRegions(), roomRegionId);
+		WorldView wv = client.getTopLevelWorldView();
+		return wv != null && ArrayUtils.contains(wv.getMapRegions(), roomRegionId);
 	}
 }
 

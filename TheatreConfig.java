@@ -24,7 +24,7 @@ public interface TheatreConfig extends Config
 	)
 	String generalSection = "General";
 
-	@Range(max = 20)
+	@Range(min = 1, max = 20)
 	@ConfigItem(
 		position = 1,
 		keyName = "theatreFontSize",

@@ -12,7 +12,6 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.theatre.RoomOverlay;
 import net.runelite.client.plugins.theatre.TheatreConfig;
 import net.runelite.client.ui.overlay.OverlayLayer;
-import net.runelite.client.ui.overlay.OverlayPriority;
 
 public class SotetsegOverlay extends RoomOverlay
 {
@@ -24,7 +23,7 @@ public class SotetsegOverlay extends RoomOverlay
 	{
 		super(config);
 		setLayer(OverlayLayer.ABOVE_SCENE);
-		setPriority(OverlayPriority.MED);
+		setPriority(PRIORITY_MED);
 	}
 
 	@Override
@@ -38,9 +37,12 @@ public class SotetsegOverlay extends RoomOverlay
 				if (tick >= 0)
 				{
 					NPC boss = sotetseg.getSotetsegNPC();
-					final String ticksCounted = String.valueOf(tick);
-					Point canvasPoint = boss.getCanvasTextLocation(graphics, ticksCounted, 50);
-					renderTextLocation(graphics, ticksCounted, Color.WHITE, canvasPoint);
+					if (boss != null)
+					{
+						final String ticksCounted = String.valueOf(tick);
+						Point canvasPoint = boss.getCanvasTextLocation(graphics, ticksCounted, 50);
+						renderTextLocation(graphics, ticksCounted, Color.WHITE, canvasPoint);
+					}
 				}
 			}
 

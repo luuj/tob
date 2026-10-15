@@ -2,7 +2,6 @@ package net.runelite.client.plugins.theatre;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import javax.annotation.Nonnull;
@@ -10,14 +9,15 @@ import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Constants;
 import net.runelite.api.Perspective;
+import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayPriority;
 import net.runelite.client.ui.overlay.OverlayUtil;
 import static net.runelite.api.Constants.TILE_FLAG_BRIDGE;
 
@@ -32,19 +32,19 @@ public abstract class RoomOverlay extends Overlay
 	{
 		this.config = config;
 		setPosition(OverlayPosition.DYNAMIC);
-		setPriority(OverlayPriority.HIGH);
+		setPriority(PRIORITY_HIGH);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 	}
 
 	protected void drawTile(Graphics2D graphics, WorldPoint point, Color color, int strokeWidth, int outlineAlpha, int fillAlpha)
 	{
-		WorldPoint playerLocation = client.getLocalPlayer().getWorldLocation();
-		if (point.distanceTo(playerLocation) >= 32)
+		Player player = client.getLocalPlayer();
+		if (point == null || player == null || point.distanceTo(player.getWorldLocation()) >= 32)
 		{
 			return;
 		}
 
-		LocalPoint lp = LocalPoint.fromWorld(client, point);
+		LocalPoint lp = LocalPoint.fromWorld(client.getTopLevelWorldView(), point);
 		if (lp == null)
 		{
 			return;
@@ -67,7 +67,8 @@ public abstract class RoomOverlay extends Overlay
 	{
 		if (canvasPoint != null)
 		{
-			graphics.setFont(new Font(FontManager.getRunescapeSmallFont().toString(), config.fontStyle().getFont(), config.theatreFontSize()));
+			// deriveFont keeps the RuneScape typeface; new Font(font.toString(), ...) silently fell back to Dialog.
+			graphics.setFont(FontManager.getRunescapeSmallFont().deriveFont(config.fontStyle().getFont(), (float) config.theatreFontSize()));
 			final Point canvasCenterPoint = new Point(canvasPoint.getX(), canvasPoint.getY());
 			final Point canvasCenterPoint_shadow = new Point(canvasPoint.getX() + 1, canvasPoint.getY() + 1);
 			OverlayUtil.renderTextLocation(graphics, canvasCenterPoint_shadow, txtString, Color.BLACK);
@@ -114,7 +115,8 @@ public abstract class RoomOverlay extends Overlay
 
 	public static Polygon getCanvasTileAreaPoly(@Nonnull Client client, @Nonnull LocalPoint localLocation, int size, int borderOffset, boolean centered)
 	{
-		final int plane = client.getPlane();
+		final WorldView wv = client.getTopLevelWorldView();
+		final int plane = wv.getPlane();
 
 		final int swX;
 		final int swY;
@@ -139,7 +141,7 @@ public abstract class RoomOverlay extends Overlay
 			neY = localLocation.getY() - (Perspective.LOCAL_TILE_SIZE + borderOffset) / 2 + size * (Perspective.LOCAL_TILE_SIZE + borderOffset);
 		}
 
-		final byte[][][] tileSettings = client.getTileSettings();
+		final byte[][][] tileSettings = wv.getTileSettings();
 
 		final int sceneX = localLocation.getSceneX();
 		final int sceneY = localLocation.getSceneY();
@@ -185,7 +187,7 @@ public abstract class RoomOverlay extends Overlay
 		int sceneY = localY >> Perspective.LOCAL_COORD_BITS;
 		if (sceneX >= 0 && sceneY >= 0 && sceneX < Perspective.SCENE_SIZE && sceneY < Perspective.SCENE_SIZE)
 		{
-			int[][][] tileHeights = client.getTileHeights();
+			int[][][] tileHeights = client.getTopLevelWorldView().getTileHeights();
 
 			int x = localX & (Perspective.LOCAL_TILE_SIZE - 1);
 			int y = localY & (Perspective.LOCAL_TILE_SIZE - 1);

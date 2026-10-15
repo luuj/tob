@@ -2,22 +2,15 @@ package net.runelite.client.plugins.theatre.Bloat;
 
 import java.awt.Color;
 import java.awt.Polygon;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Objects;
-import java.util.Set;
 import javax.inject.Inject;
-import com.google.common.collect.ImmutableSet;
 import lombok.Getter;
 import net.runelite.api.Client;
-import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
-import net.runelite.api.NpcID;
-import net.runelite.api.Scene;
-import net.runelite.api.Tile;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.AnimationChanged;
@@ -26,6 +19,7 @@ import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.theatre.Room;
 import net.runelite.client.plugins.theatre.RoomOverlay;
@@ -41,7 +35,7 @@ public class Bloat extends Room
 	private BloatOverlay bloatOverlay;
 
 	@Inject
-	protected Bloat(final Client client, TheatrePlugin plugin, TheatreConfig config)
+	protected Bloat(TheatrePlugin plugin, TheatreConfig config)
 	{
 		super(plugin, config);
 	}
@@ -63,9 +57,6 @@ public class Bloat extends Room
 
 	private boolean bloatStarted;
 
-	public static final Set<Integer> tankObjectIDs = ImmutableSet.of(32957, 32955, 32959, 32960, 32964, 33084, 0);
-	public static final Set<Integer> topOfTankObjectIDs = ImmutableSet.of(32958, 32962, 32964, 32965, 33062);
-	public static final Set<Integer> ceilingChainsObjectIDs = ImmutableSet.of(32949, 32950, 32951, 32952, 32953, 32954, 32970);
 
 	@Override
 	public void load()
@@ -87,7 +78,7 @@ public class Bloat extends Room
 		NPC npc = npcSpawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.PESTILENT_BLOAT:
+			case NpcID.TOB_BLOAT:
 			case 10812:
 			case 10813:
 				bloatActive = true;
@@ -105,7 +96,7 @@ public class Bloat extends Room
 		NPC npc = npcDespawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.PESTILENT_BLOAT:
+			case NpcID.TOB_BLOAT:
 			case 10812:
 			case 10813:
 				bloatActive = false;
@@ -116,32 +107,6 @@ public class Bloat extends Room
 		}
 	}
 
-
-	public void removeGameObjectsFromScene(int plane, int... gameObjectIDs)
-	{
-		Scene scene = client.getScene();
-		Tile[][] tiles = scene.getTiles()[plane];
-
-		/* created by nicole#1111 */
-		for (int sceneTilesX = 0; sceneTilesX < 104; sceneTilesX++)
-		{
-			for (int sceneTilesY = 0; sceneTilesY < 104; sceneTilesY++)
-			{
-				Tile tile = tiles[sceneTilesX][sceneTilesY];
-				if (tile != null)
-				{
-					GameObject[] gameObjects = tile.getGameObjects();
-
-					Arrays.stream(gameObjects)
-							.filter(Objects::nonNull)
-							.filter(gameObject -> Arrays.stream(gameObjectIDs)
-							.anyMatch(id -> id == gameObject.getId()))
-							.forEach(scene::removeGameObject);
-				}
-			}
-		}
-
-	}
 
 	@Subscribe
 	public void onAnimationChanged(AnimationChanged event)
@@ -234,7 +199,7 @@ public class Bloat extends Room
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-		if (client.getVarbitValue(6447) == 1 && !bloatStarted)
+		if (client.getVarbitValue(VarbitID.TOB_CLIENT_WAVEPROGRESS_TYPE) == 1 && !bloatStarted)
 		{
 			bloatTickCount = 0;
 			bloatStarted = true;
@@ -271,7 +236,7 @@ public class Bloat extends Room
 				return RoomOverlay.getCanvasTileAreaPoly(client, lp, size, true);
 			case 2:
 			case 3:
-				lp = LocalPoint.fromWorld(client, bloatNPC.getWorldLocation());
+				lp = LocalPoint.fromWorld(client.getTopLevelWorldView(), bloatNPC.getWorldLocation());
 
 				if (lp == null)
 				{

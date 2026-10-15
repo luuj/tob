@@ -14,7 +14,6 @@ import net.runelite.client.plugins.theatre.TheatreConfig;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayPriority;
 import net.runelite.client.ui.overlay.components.LayoutableRenderableEntity;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
@@ -50,7 +49,7 @@ public class NylocasAliveCounterOverlay extends Overlay
 		this.config = config;
 
 		setPosition(OverlayPosition.TOP_LEFT);
-		setPriority(OverlayPriority.HIGH);
+		setPriority(PRIORITY_HIGH);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 		refreshPanel();
 	}
@@ -116,6 +115,11 @@ public class NylocasAliveCounterOverlay extends Overlay
 
 	public String getFormattedTime()
 	{
+		if (nyloWaveStart == null)
+		{
+			return "--:--";
+		}
+
 		Duration duration = Duration.between(nyloWaveStart, Instant.now());
 		LocalTime localTime = LocalTime.ofSecondOfDay(duration.getSeconds());
 		return localTime.format(DateTimeFormatter.ofPattern("mm:ss"));

@@ -175,7 +175,7 @@ public class VerzikOverlay extends RoomOverlay
 				if (config.lightningAttackTick())
 				{
 					client.getProjectiles().forEach((p) -> {
-						Actor getInteracting = p.getInteracting();
+						Actor getInteracting = p.getTargetActor();
 
 						if (p.getId() == VERZIK_LIGHTNING_BALL)
 						{
@@ -241,7 +241,7 @@ public class VerzikOverlay extends RoomOverlay
 					{
 						String text = Integer.toString(verzik.getVerzikYellows());
 
-						for (GraphicsObject object : client.getGraphicsObjects())
+						for (GraphicsObject object : client.getTopLevelWorldView().getGraphicsObjects())
 						{
 							if (object.getId() == 1595)
 							{
@@ -260,6 +260,7 @@ public class VerzikOverlay extends RoomOverlay
 					{
 						if (p.getId() == VERZIK_GREEN_BALL)
 						{
+							Actor target = p.getTargetActor();
 							if (config.verzikGreenBallTick())
 							{
 								Point point = getProjectilePoint(p);
@@ -270,16 +271,16 @@ public class VerzikOverlay extends RoomOverlay
 								}
 							}
 
-							if (config.verzikGreenBall())
+							if (config.verzikGreenBall() && target != null)
 							{
 								Polygon tilePoly;
 								if (config.verzikGreenBallMarker() == TheatreConfig.VERZIKBALLTILE.TILE)
 								{
-									tilePoly = p.getInteracting().getCanvasTilePoly();
+									tilePoly = target.getCanvasTilePoly();
 								}
 								else
 								{
-									tilePoly = getCanvasTileAreaPoly(client, p.getInteracting().getLocalLocation(), 3, true);
+									tilePoly = getCanvasTileAreaPoly(client, target.getLocalLocation(), 3, true);
 								}
 
 								if (tilePoly != null)
@@ -329,7 +330,7 @@ public class VerzikOverlay extends RoomOverlay
 									LocalPoint lp = LocalPoint.fromWorld(client, k.getWorldLocation());
 									if (lp != null)
 									{
-										lp = new LocalPoint(lp.getX() - thick_size * Perspective.LOCAL_TILE_SIZE, lp.getY() - thick_size * Perspective.LOCAL_TILE_SIZE);
+										lp = lp.plus(-thick_size * Perspective.LOCAL_TILE_SIZE, -thick_size * Perspective.LOCAL_TILE_SIZE);
 
 										Polygon tilePoly = getCanvasTileAreaPoly(client, lp, size, false);
 										if (tilePoly != null)
@@ -353,6 +354,7 @@ public class VerzikOverlay extends RoomOverlay
 		int x = (int) p.getX();
 		int y = (int) p.getY();
 		int z = (int) p.getZ();
-		return Perspective.localToCanvas(client, new LocalPoint(x, y), 0, Perspective.getTileHeight(client, new LocalPoint(x, y), p.getFloor()) - z);
+		LocalPoint lp = new LocalPoint(x, y, client.getTopLevelWorldView());
+		return Perspective.localToCanvas(client, lp, 0, Perspective.getTileHeight(client, lp, p.getTargetLevel()) - z);
 	}
 }

@@ -9,7 +9,6 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.inject.Inject;
 import com.google.common.collect.ImmutableList;
 import net.runelite.api.NPC;
@@ -109,8 +108,11 @@ public class NylocasOverlay extends RoomOverlay
 				text += "(" + nylocas.getNyloBossTotalTickCount() + ")";
 			}
 
-			Point canvasPoint = nylocas.getNyloBossNPC().getCanvasTextLocation(graphics, text, 50);
-			renderTextLocation(graphics, text, Color.WHITE, canvasPoint);
+			NPC boss = nylocas.getNyloBossNPC();
+			if (boss != null)
+			{
+				renderTextLocation(graphics, text, Color.WHITE, boss.getCanvasTextLocation(graphics, text, 50));
+			}
 		}
 
 		if (nylocas.isNyloActive())
@@ -167,9 +169,9 @@ public class NylocasOverlay extends RoomOverlay
 
 			if (config.nyloTicksUntilWaves() && !nylocas.isNyloBossAlive())
 			{
-				LocalPoint eastPoint = LocalPoint.fromWorld(client, WorldPoint.fromRegion(Objects.requireNonNull(client.getLocalPlayer()).getWorldLocation().getRegionID(), 43, 25, client.getLocalPlayer().getWorldLocation().getPlane()));
-				LocalPoint southPoint = LocalPoint.fromWorld(client, WorldPoint.fromRegion(Objects.requireNonNull(client.getLocalPlayer()).getWorldLocation().getRegionID(), 25, 6, client.getLocalPlayer().getWorldLocation().getPlane()));
-				LocalPoint westPoint = LocalPoint.fromWorld(client, WorldPoint.fromRegion(Objects.requireNonNull(client.getLocalPlayer()).getWorldLocation().getRegionID(), 5, 24, client.getLocalPlayer().getWorldLocation().getPlane()));
+				LocalPoint eastPoint = regionLocalPoint(43, 25);
+				LocalPoint southPoint = regionLocalPoint(25, 6);
+				LocalPoint westPoint = regionLocalPoint(5, 24);
 
 				Polygon southPoly = null;
 				Polygon eastPoly = null;
@@ -177,15 +179,15 @@ public class NylocasOverlay extends RoomOverlay
 
 				if (southPoint != null)
 				{
-					southPoly = Perspective.getCanvasTileAreaPoly(client, new LocalPoint(southPoint.getX() - 64, southPoint.getY() + 64), 2);
+					southPoly = Perspective.getCanvasTileAreaPoly(client, southPoint.plus(-64, 64), 2);
 				}
 				if (eastPoint != null)
 				{
-					eastPoly = Perspective.getCanvasTileAreaPoly(client, new LocalPoint(eastPoint.getX() - 64, eastPoint.getY() - 64), 2);
+					eastPoly = Perspective.getCanvasTileAreaPoly(client, eastPoint.plus(-64, -64), 2);
 				}
 				if (westPoint != null)
 				{
-					westPoly = Perspective.getCanvasTileAreaPoly(client, new LocalPoint(westPoint.getX() + 64, westPoint.getY() + 64), 2);
+					westPoly = Perspective.getCanvasTileAreaPoly(client, westPoint.plus(64, 64), 2);
 				}
 
 				if (eastPoly != null)
@@ -212,7 +214,7 @@ public class NylocasOverlay extends RoomOverlay
 					final String healthStr = health + "%";
 
 					WorldPoint p = npc.getWorldLocation();
-					LocalPoint lp = LocalPoint.fromWorld(client, p.getX() + 1, p.getY() + 1);
+					LocalPoint lp = LocalPoint.fromWorld(client.getTopLevelWorldView(), p.getX() + 1, p.getY() + 1);
 
 					final double rMod = 130.0 * health / 100.0;
 					final double gMod = 255.0 * health / 100.0;
@@ -222,7 +224,7 @@ public class NylocasOverlay extends RoomOverlay
 
 					if (lp != null)
 					{
-						Point canvasPoint = Perspective.localToCanvas(client, lp, client.getPlane(),
+						Point canvasPoint = Perspective.localToCanvas(client, lp, client.getTopLevelWorldView().getPlane(),
 							65);
 						renderTextLocation(graphics, healthStr, c, canvasPoint);
 					}
@@ -383,7 +385,7 @@ public class NylocasOverlay extends RoomOverlay
 		{
 			for (int i = 0; i < nyloSpawnSplitCsv.length; i++)
 			{
-				drawPoly(graphics, nyloSpawnSplitCsv[i], direction, LocalPoint.fromWorld(client, WorldPoint.fromRegion(Objects.requireNonNull(client.getLocalPlayer()).getWorldLocation().getRegionID(), pointArray.get(i).getX(), pointArray.get(i).getY(), client.getLocalPlayer().getWorldLocation().getPlane())));
+				drawPoly(graphics, nyloSpawnSplitCsv[i], direction, regionLocalPoint(pointArray.get(i).getX(), pointArray.get(i).getY()));
 			}
 		}
 		// does not change colors on walkup
@@ -392,13 +394,18 @@ public class NylocasOverlay extends RoomOverlay
 			if (!nyloHelperString.isBlank())
 
 			{
-				drawPoly(graphics, nyloHelperString, direction, LocalPoint.fromWorld(client, WorldPoint.fromRegion(Objects.requireNonNull(client.getLocalPlayer()).getWorldLocation().getRegionID(), pointArray.get(0).getX(), pointArray.get(0).getY(), client.getLocalPlayer().getWorldLocation().getPlane())));
+				drawPoly(graphics, nyloHelperString, direction, regionLocalPoint(pointArray.get(0).getX(), pointArray.get(0).getY()));
 			}
 		}
 	}
 
 	private void drawPoly(Graphics2D graphics, String nyloType, String direction, LocalPoint localPoint)
 	{
+		if (localPoint == null)
+		{
+			return;
+		}
+
 		Polygon poly = null;
 		if (nyloType.equals("mage") || nyloType.equals("melee") || nyloType.equals("range"))
 		{
@@ -410,13 +417,13 @@ public class NylocasOverlay extends RoomOverlay
 			switch (direction)
 			{
 				case "east":
-					localPointBig = new LocalPoint(localPoint.getX() - 64, localPoint.getY() - 64);
+					localPointBig = localPoint.plus(-64, -64);
 					break;
 				case "west":
-					localPointBig = new LocalPoint(localPoint.getX() + 64, localPoint.getY() + 64);
+					localPointBig = localPoint.plus(64, 64);
 					break;
 				case "south":
-					localPointBig = new LocalPoint(localPoint.getX() - 64, localPoint.getY() + 64);
+					localPointBig = localPoint.plus(-64, 64);
 					break;
 			}
 			if (localPointBig != null) 
@@ -429,6 +436,23 @@ public class NylocasOverlay extends RoomOverlay
 			renderPolyWithFillAlpha(graphics, getColor(nyloType), poly, 2, 60);
 			renderTextLocation(graphics, String.valueOf(nylocas.getNyloWave() + 1), Color.YELLOW, centerPoint(poly.getBounds()));
 		}
+	}
+
+	/**
+	 * Converts a region-relative tile in the local player's current region to a LocalPoint,
+	 * or null if there is no local player or the tile is outside the loaded scene.
+	 */
+	private LocalPoint regionLocalPoint(int regionX, int regionY)
+	{
+		Player player = client.getLocalPlayer();
+		if (player == null)
+		{
+			return null;
+		}
+
+		WorldPoint location = player.getWorldLocation();
+		WorldPoint wp = WorldPoint.fromRegion(location.getRegionID(), regionX, regionY, location.getPlane());
+		return LocalPoint.fromWorld(client.getTopLevelWorldView(), wp);
 	}
 
 	private Point centerPoint(Rectangle rect)

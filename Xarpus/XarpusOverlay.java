@@ -11,11 +11,12 @@ import java.util.Objects;
 import java.util.function.Function;
 import javax.inject.Inject;
 import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.api.GroundObject;
 import net.runelite.api.Perspective;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.theatre.Direction;
@@ -66,8 +67,8 @@ public class XarpusOverlay extends RoomOverlay
 		{
 			NPC boss = xarpus.getXarpusNPC();
 
-			if ((config.xarpusTickP2() && (boss.getId() == NpcID.XARPUS_8340 || boss.getId() == 10768 || boss.getId() == 10772))
-				|| (config.xarpusTickP3() && (boss.getId() == NpcID.XARPUS_8341 || boss.getId() == 10769 || boss.getId() == 10773)))
+			if ((config.xarpusTickP2() && (boss.getId() == NpcID.TOB_XARPUS_COMBAT || boss.getId() == 10768 || boss.getId() == 10772))
+				|| (config.xarpusTickP3() && (boss.getId() == NpcID.XARPUS_DEATH || boss.getId() == 10769 || boss.getId() == 10773)))
 			{
 				int tick = xarpus.getXarpusTicksUntilAttack();
 				final String ticksLeftStr = String.valueOf(tick);
@@ -75,7 +76,7 @@ public class XarpusOverlay extends RoomOverlay
 				renderTextLocation(graphics, ticksLeftStr, Color.WHITE, canvasPoint);
 			}
 
-			if ((config.xarpusExhumed() || config.xarpusExhumedTick()) && (boss.getId() == NpcID.XARPUS_8339 || boss.getId() == 10767 || boss.getId() == 10771))
+			if ((config.xarpusExhumed() || config.xarpusExhumedTick()) && (boss.getId() == NpcID.TOB_XARPUS_FEEDING || boss.getId() == 10767 || boss.getId() == 10771))
 			{
 				if (!xarpus.getXarpusExhumeds().isEmpty())
 				{
@@ -120,7 +121,7 @@ public class XarpusOverlay extends RoomOverlay
 	private void renderLineOfSightPolygon(Graphics2D graphics)
 	{
 		NPC xarpusNpc = xarpus.getXarpusNPC();
-		if (xarpusNpc != null && (xarpusNpc.getId() == NpcID.XARPUS_8340 || xarpusNpc.getId() == 10768 || xarpusNpc.getId() == 10772) && !xarpusNpc.isDead() && xarpus.isPostScreech())
+		if (xarpusNpc != null && (xarpusNpc.getId() == NpcID.TOB_XARPUS_COMBAT || xarpusNpc.getId() == 10768 || xarpusNpc.getId() == 10772) && !xarpusNpc.isDead() && xarpus.isPostScreech())
 		{
 			WorldPoint xarpusWorldPoint = WorldPoint.fromLocal(client, xarpusNpc.getLocalLocation());
 			Direction dir = Direction.getPreciseDirection(xarpusNpc.getOrientation());
@@ -162,20 +163,25 @@ public class XarpusOverlay extends RoomOverlay
 
 	private Point localToCanvas(Direction dir, int px, int py)
 	{
-		LocalPoint lp = LocalPoint.fromWorld(client, px, py);
-		int x = lp.getX();
-		int y = lp.getY();
+		WorldView wv = client.getTopLevelWorldView();
+		LocalPoint lp = LocalPoint.fromWorld(wv, px, py);
+		if (lp == null)
+		{
+			return null;
+		}
+
 		int s = 64;
+		int plane = wv.getPlane();
 		switch (dir)
 		{
 			case NORTHEAST:
-				return Perspective.localToCanvas(client, new LocalPoint(x - s, y - s), client.getPlane());
+				return Perspective.localToCanvas(client, lp.plus(-s, -s), plane);
 			case NORTHWEST:
-				return Perspective.localToCanvas(client, new LocalPoint(x + s, y - s), client.getPlane());
+				return Perspective.localToCanvas(client, lp.plus(s, -s), plane);
 			case SOUTHEAST:
-				return Perspective.localToCanvas(client, new LocalPoint(x - s, y + s), client.getPlane());
+				return Perspective.localToCanvas(client, lp.plus(-s, s), plane);
 			case SOUTHWEST:
-				return Perspective.localToCanvas(client, new LocalPoint(x + s, y + s), client.getPlane());
+				return Perspective.localToCanvas(client, lp.plus(s, s), plane);
 			default:
 				return null;
 		}

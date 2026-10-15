@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
@@ -18,10 +17,11 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.Skill;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.AnimationChanged;
@@ -33,7 +33,7 @@ import net.runelite.api.events.NpcChanged;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.kit.KitType;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.SkillIconManager;
@@ -43,7 +43,6 @@ import net.runelite.client.plugins.theatre.TheatreConfig;
 import net.runelite.client.plugins.theatre.TheatreInputListener;
 import net.runelite.client.plugins.theatre.TheatrePlugin;
 import net.runelite.client.ui.overlay.components.InfoBoxComponent;
-import org.apache.commons.lang3.ObjectUtils;
 
 public class Nylocas extends Room
 {
@@ -123,8 +122,8 @@ public class Nylocas extends Room
 	private HashMap<NyloNPC, NPC> currentWave = new HashMap<>();
 
 	@Getter
-	private final Map<LocalPoint, Integer> splitsMap = new HashMap();
-	private final Set<NPC> bigNylos = new HashSet();
+	private final Map<LocalPoint, Integer> splitsMap = new HashMap<>();
+	private final Set<NPC> bigNylos = new HashSet<>();
 
 	private int varbit6447 = -1;
 	private boolean nextInstance = true;
@@ -139,15 +138,6 @@ public class Nylocas extends Room
 
 	private static final int NPCID_NYLOCAS_PILLAR = 8358;
 
-	private boolean skipTickCheck = false;
-
-	private static final String MAGE_NYLO = "Nylocas Hagios";
-	private static final String RANGE_NYLO = "Nylocas Toxobolos";
-	private static final String MELEE_NYLO = "Nylocas Ischyros";
-
-	private static final Set<Integer> NYLO_BOSS_MELEE = Set.of(NpcID.NYLOCAS_VASILIAS_10808, NpcID.NYLOCAS_PRINKIPAS_10804, NpcID.NYLOCAS_VASILIAS_8355);
-	private static final Set<Integer> NYLO_BOSS_MAGE = Set.of(NpcID.NYLOCAS_VASILIAS_10809, NpcID.NYLOCAS_PRINKIPAS_10805, NpcID.NYLOCAS_VASILIAS_8356);
-	private static final Set<Integer> NYLO_BOSS_RANGE = Set.of(NpcID.NYLOCAS_VASILIAS_10810, NpcID.NYLOCAS_PRINKIPAS_10806, NpcID.NYLOCAS_VASILIAS_8357);
 
 	@Override
 	public void init()
@@ -365,10 +355,10 @@ public class Nylocas extends Room
 					}
 				}
 				break;
-			case NpcID.NYLOCAS_VASILIAS:
-			case NpcID.NYLOCAS_VASILIAS_8355:
-			case NpcID.NYLOCAS_VASILIAS_8356:
-			case NpcID.NYLOCAS_VASILIAS_8357:
+			case NpcID.NYLOCAS_BOSS_SPAWNING:
+			case NpcID.NYLOCAS_BOSS_MELEE:
+			case NpcID.NYLOCAS_BOSS_MAGIC:
+			case NpcID.NYLOCAS_BOSS_RANGED:
 			case 10786:
 			case 10787:
 			case 10788:
@@ -518,10 +508,10 @@ public class Nylocas extends Room
 					endOfWavesCallback.run();
 				}
 				break;
-			case NpcID.NYLOCAS_VASILIAS:
-			case NpcID.NYLOCAS_VASILIAS_8355:
-			case NpcID.NYLOCAS_VASILIAS_8356:
-			case NpcID.NYLOCAS_VASILIAS_8357:
+			case NpcID.NYLOCAS_BOSS_SPAWNING:
+			case NpcID.NYLOCAS_BOSS_MELEE:
+			case NpcID.NYLOCAS_BOSS_MAGIC:
+			case NpcID.NYLOCAS_BOSS_RANGED:
 			case 10786:
 			case 10787:
 			case 10788:
@@ -607,8 +597,7 @@ public class Nylocas extends Room
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-		int[] varps = client.getVarps();
-		int newVarbit6447 = client.getVarbitValue(varps, 6447);
+		int newVarbit6447 = client.getVarbitValue(VarbitID.TOB_CLIENT_WAVEPROGRESS_TYPE);
 
 		if (inRoomRegion(TheatrePlugin.NYLOCAS_REGION) && newVarbit6447 != 0 && newVarbit6447 != varbit6447)
 		{
@@ -654,20 +643,6 @@ public class Nylocas extends Room
 	{
 		if (inRoomRegion(TheatrePlugin.NYLOCAS_REGION) && nyloActive)
 		{
-			if (skipTickCheck)
-			{
-				skipTickCheck = false;
-			}
-			else
-			{
-				if (client.getLocalPlayer() == null || client.getLocalPlayer().getPlayerComposition() == null)
-				{
-					return;
-				}
-
-				int equippedWeapon = ObjectUtils.defaultIfNull(client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.WEAPON), -1);
-			}
-
 			for (Iterator<NPC> it = nylocasNpcs.keySet().iterator(); it.hasNext(); )
 			{
 				NPC npc = it.next();
@@ -727,16 +702,21 @@ public class Nylocas extends Room
 	@Subscribe
 	public void onClientTick(ClientTick event)
 	{
-		List<Player> players = client.getPlayers();
-		for (Player player : players)
+		if (!nextInstance || !inRoomRegion(TheatrePlugin.BLOAT_REGION))
+		{
+			return;
+		}
+
+		WorldView wv = client.getTopLevelWorldView();
+		for (Player player : wv.players())
 		{
 			if (player.getWorldLocation() != null)
 			{
 				LocalPoint lp = player.getLocalLocation();
 
 				WorldPoint wp = WorldPoint.fromRegion(player.getWorldLocation().getRegionID(), 5, 33, 0);
-				LocalPoint lp1 = LocalPoint.fromWorld(client, wp.getX(), wp.getY());
-				if (lp1 != null)
+				LocalPoint lp1 = LocalPoint.fromWorld(wv, wp.getX(), wp.getY());
+				if (lp1 != null && lp != null)
 				{
 					Point base = new Point(lp1.getSceneX(), lp1.getSceneY());
 					Point point = new Point(lp.getSceneX() - base.getX(), lp.getSceneY() - base.getY());
@@ -762,7 +742,7 @@ public class Nylocas extends Room
 		}
 
 		// Filter all entries with Examine
-		client.setMenuEntries(Arrays.stream(menu.getMenuEntries()).filter(s -> !s.getOption().equals("Examine")).toArray(MenuEntry[]::new));
+		client.getMenu().setMenuEntries(Arrays.stream(menu.getMenuEntries()).filter(s -> !s.getOption().equals("Examine")).toArray(MenuEntry[]::new));
 	}
 
 }

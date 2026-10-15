@@ -5,7 +5,7 @@ import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.Varbits;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.ClientTick;
 import net.runelite.api.events.GameObjectSpawned;
@@ -13,6 +13,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GraphicsObjectCreated;
 import net.runelite.api.events.GroundObjectSpawned;
+import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.NpcChanged;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
@@ -107,6 +108,11 @@ public class TheatrePlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		if (rooms == null)
+		{
+			return;
+		}
+
 		for (Room room : rooms)
 		{
 			room.unload();
@@ -167,6 +173,12 @@ public class TheatrePlugin extends Plugin
 	@Subscribe
 	public void onClientTick(ClientTick event)
 	{
+		// Both handlers only matter inside ToB; skip the per-frame player scan everywhere else.
+		if (!tobActive)
+		{
+			return;
+		}
+
 		nylocas.onClientTick(event);
 		xarpus.onClientTick(event);
 	}
@@ -174,7 +186,7 @@ public class TheatrePlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-		tobActive = client.getVarbitValue(Varbits.THEATRE_OF_BLOOD) > 1;
+		tobActive = client.getVarbitValue(VarbitID.TOB_CLIENT_PARTYSTATUS) > 1;
 
 		bloat.onVarbitChanged(event);
 		nylocas.onVarbitChanged(event);
@@ -218,6 +230,12 @@ public class TheatrePlugin extends Plugin
 		bloat.onAnimationChanged(animationChanged);
 		nylocas.onAnimationChanged(animationChanged);
 		sotetseg.onAnimationChanged(animationChanged);
+	}
+
+	@Subscribe
+	public void onMenuOpened(MenuOpened event)
+	{
+		nylocas.onMenuOpened(event);
 	}
 
 	@Subscribe

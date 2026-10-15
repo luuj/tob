@@ -1,8 +1,11 @@
 package net.runelite.client.plugins.theatre.Xarpus;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
@@ -13,10 +16,10 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.GroundObject;
 import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
-import net.runelite.api.Varbits;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ClientTick;
@@ -26,13 +29,13 @@ import net.runelite.api.events.GroundObjectSpawned;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.theatre.Room;
 import net.runelite.client.plugins.theatre.TheatreConfig;
 import net.runelite.client.plugins.theatre.TheatrePlugin;
 import net.runelite.client.ui.overlay.infobox.Counter;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
-import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class Xarpus extends Room
@@ -98,7 +101,36 @@ public class Xarpus extends Room
 	@Override
 	public void init()
 	{
-		EXHUMED_COUNT_ICON = ImageUtil.resizeCanvas(ImageUtil.getResourceStreamFromClass(TheatrePlugin.class, "1067-POISON.png"), 26, 26);
+		EXHUMED_COUNT_ICON = createExhumedIcon();
+	}
+
+	/**
+	 * Draws the exhumed counter icon in code (a green poison-style orb) so the plugin
+	 * does not depend on an external image resource being on the classpath.
+	 */
+	private static BufferedImage createExhumedIcon()
+	{
+		final int size = 26;
+		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = image.createGraphics();
+		try
+		{
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			g.setColor(new Color(0, 120, 0));
+			g.fillOval(1, 1, size - 3, size - 3);
+			g.setColor(new Color(60, 220, 60));
+			g.fillOval(4, 4, size - 9, size - 9);
+			g.setColor(new Color(220, 255, 220, 200));
+			g.fillOval(8, 7, 6, 5);
+			g.setColor(Color.BLACK);
+			g.setStroke(new BasicStroke(1.5f));
+			g.drawOval(1, 1, size - 3, size - 3);
+		}
+		finally
+		{
+			g.dispose();
+		}
+		return image;
 	}
 
 	@Override
@@ -123,10 +155,10 @@ public class Xarpus extends Room
 		NPC npc = npcSpawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.XARPUS:
-			case NpcID.XARPUS_8339:
-			case NpcID.XARPUS_8340:
-			case NpcID.XARPUS_8341:
+			case NpcID.TOB_XARPUS_STATIC:
+			case NpcID.TOB_XARPUS_FEEDING:
+			case NpcID.TOB_XARPUS_COMBAT:
+			case NpcID.XARPUS_DEATH:
 			case 10766:
 			case 10767:
 			case 10768:
@@ -152,10 +184,10 @@ public class Xarpus extends Room
 		NPC npc = npcDespawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.XARPUS:
-			case NpcID.XARPUS_8339:
-			case NpcID.XARPUS_8340:
-			case NpcID.XARPUS_8341:
+			case NpcID.TOB_XARPUS_STATIC:
+			case NpcID.TOB_XARPUS_FEEDING:
+			case NpcID.TOB_XARPUS_COMBAT:
+			case NpcID.XARPUS_DEATH:
 			case 10766:
 			case 10767:
 			case 10768:
@@ -176,6 +208,7 @@ public class Xarpus extends Room
 				exhumedSpawned = false;
 				postScreech = false;
 				exhumedCount = -1;
+				xarpusStarted = false;
 				break;
 		}
 	}
@@ -235,7 +268,7 @@ public class Xarpus extends Room
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-		if (!xarpusStarted && inRoomRegion(TheatrePlugin.XARPUS_REGION) && client.getVarbitValue(client.getVarps(), 6447) == 2 && (client.getVarbitValue(Varbits.MULTICOMBAT_AREA) == 1))
+		if (!xarpusStarted && inRoomRegion(TheatrePlugin.XARPUS_REGION) && client.getVarbitValue(VarbitID.TOB_CLIENT_WAVEPROGRESS_TYPE) == 2 && client.getVarbitValue(VarbitID.MULTIWAY_INDICATOR) == 1)
 		{
 			xarpusStarted = true;
 			isInstanceTimerRunning = false;
@@ -271,7 +304,7 @@ public class Xarpus extends Room
 					xarpusTicksUntilAttack = 8;
 				}
 			}
-			else if (xarpusNPC.getId() == NpcID.XARPUS_8340 || xarpusNPC.getId() == 10768 || xarpusNPC.getId() == 10772)
+			else if (xarpusNPC.getId() == NpcID.TOB_XARPUS_COMBAT || xarpusNPC.getId() == 10768 || xarpusNPC.getId() == 10772)
 			{
 				xarpusTicksUntilAttack--;
 				if (xarpusTicksUntilAttack <= 0)
@@ -291,21 +324,22 @@ public class Xarpus extends Room
 	@Subscribe
 	public void onClientTick(ClientTick event)
 	{
-		if (client.getLocalPlayer() == null)
+		if (client.getLocalPlayer() == null || !nextInstance || !isInSotetsegRegion())
 		{
 			return;
 		}
-		List<Player> players = client.getPlayers();
-		for (Player player : players)
+
+		WorldView wv = client.getTopLevelWorldView();
+		for (Player player : wv.players())
 		{
 			if (player.getWorldLocation() != null)
 			{
 				WorldPoint wpPlayer = player.getWorldLocation();
-				LocalPoint lpPlayer = LocalPoint.fromWorld(client, wpPlayer.getX(), wpPlayer.getY());
+				LocalPoint lpPlayer = LocalPoint.fromWorld(wv, wpPlayer.getX(), wpPlayer.getY());
 
 				WorldPoint wpChest = WorldPoint.fromRegion(player.getWorldLocation().getRegionID(), 17, 5, player.getWorldLocation().getPlane());
-				LocalPoint lpChest = LocalPoint.fromWorld(client, wpChest.getX(), wpChest.getY());
-				if (lpChest != null)
+				LocalPoint lpChest = LocalPoint.fromWorld(wv, wpChest.getX(), wpChest.getY());
+				if (lpChest != null && lpPlayer != null)
 				{
 					Point point = new Point(lpChest.getSceneX() - lpPlayer.getSceneX(), lpChest.getSceneY() - lpPlayer.getSceneY());
 

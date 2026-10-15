@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import com.google.common.collect.ArrayListMultimap;
 import net.runelite.api.Client;
 import net.runelite.api.NPC;
+import net.runelite.api.NPCComposition;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.theatre.RoomOverlay;
@@ -103,7 +104,7 @@ public class MaidenOverlay extends RoomOverlay
 				nyloGrouped.put(point, nylo);
 				if (nylo.getName() != null && nylo.getHealthScale() > 0 && nylo.getHealthRatio() < 100 && maiden.getMaidenReds().containsKey(nylo))
 				{
-					maiden.getMaidenReds().put(nylo, new MutablePair(nylo.getHealthRatio(), nylo.getHealthScale()));
+					maiden.getMaidenReds().put(nylo, new MutablePair<>(nylo.getHealthRatio(), nylo.getHealthScale()));
 				}
 			}
 
@@ -111,7 +112,7 @@ public class MaidenOverlay extends RoomOverlay
 
 		FontMetrics fontMetrics = graphics.getFontMetrics();
 
-		for (Point point : nyloGrouped.keys())
+		for (Point point : nyloGrouped.keySet())
 		{
 			int zOffset = 0;
 
@@ -166,9 +167,11 @@ public class MaidenOverlay extends RoomOverlay
 			string += " - ";
 		}
 
-		if (config.maidenRedsDistance())
+		NPC maidenNpc = maiden.getMaidenNPC();
+		if (config.maidenRedsDistance() && maidenNpc != null)
 		{
-			final int maidenX = maiden.getMaidenNPC().getWorldLocation().getX() + maiden.getMaidenNPC().getTransformedComposition().getSize();
+			NPCComposition composition = maidenNpc.getTransformedComposition();
+			final int maidenX = maidenNpc.getWorldLocation().getX() + (composition != null ? composition.getSize() : 1);
 
 			int deltaX = Math.max(0, nyloNPC.getWorldLocation().getX() - maidenX);
 			string += deltaX;

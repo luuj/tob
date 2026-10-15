@@ -17,7 +17,8 @@ import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
+import net.runelite.api.gameval.NpcID;
+import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.Projectile;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameObjectSpawned;
@@ -164,7 +165,7 @@ public class Verzik extends Room
 		NPC npc = npcSpawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.WEB:
+			case NpcID.VERZIK_WEB_NPC:
 			case 10837:
 			case 10854:
 				if (verzikNPC != null && verzikNPC.getInteracting() == null)
@@ -172,15 +173,15 @@ public class Verzik extends Room
 					verzikSpecial = SpecialAttack.WEBS;
 				}
 				break;
-			case NpcID.NYLOCAS_ISCHYROS_8381:
-			case NpcID.NYLOCAS_HAGIOS_8383:
-			case NpcID.NYLOCAS_TOXOBOLOS_8382:
+			case NpcID.VERZIK_NYLOCAS_MELEE:
+			case NpcID.VERZIK_NYLOCAS_MAGIC:
+			case NpcID.VERZIK_NYLOCAS_RANGED:
 			case 10858:
 			case 10859:
 			case 10860:
 				verzikAggros.add(npc);
 				break;
-			case NpcID.NYLOCAS_MATOMENOS_8385:
+			case NpcID.TOB_VERZIK_PHASE2_BLOODNYLOCAS:
 			case 10845:
 			case 10862:
 				verzikReds.putIfAbsent(npc, new MutablePair<>(npc.getHealthRatio(), npc.getHealthScale()));
@@ -198,41 +199,41 @@ public class Verzik extends Room
 					verzikFirstEnraged = true;
 				}
 				break;
-			case NpcID.VERZIK_VITUR_8369:
+			case NpcID.VERZIK_INITIAL:
 			case 10830:
 			case 10847:
 				verzikSpawn(npc);
 				break;
-			case NpcID.VERZIK_VITUR_8370:
+			case NpcID.VERZIK_PHASE1:
 			case 10831:
 			case 10848:
 				verzikPhase = Phase.PHASE1;
 				verzikSpawn(npc);
 				break;
-			case NpcID.VERZIK_VITUR_8371:
+			case NpcID.VERZIK_PHASE1_TO2_TRANSITION:
 			case 10832:
 			case 10849:
 				verzikSpawn(npc);
 				break;
-			case NpcID.VERZIK_VITUR_8372:
+			case NpcID.VERZIK_PHASE2:
 			case 10833:
 			case 10850:
 				verzikPhase = Phase.PHASE2;
 				verzikSpawn(npc);
 				break;
-			case NpcID.VERZIK_VITUR_8373:
+			case NpcID.VERZIK_PHASE2_TO3_TRANSITION:
 			case 10834:
 			case 10851:
 				verzikSpawn(npc);
 				break;
-			case NpcID.VERZIK_VITUR_8374:
+			case NpcID.VERZIK_PHASE3:
 			case 10835:
 			case 10852:
 				verzikRangeProjectiles.clear();
 				verzikPhase = Phase.PHASE3;
 				verzikSpawn(npc);
 				break;
-			case NpcID.VERZIK_VITUR_8375:
+			case NpcID.VERZIK_DEATH_BAT:
 			case 10836:
 			case 10853:
 				verzikSpawn(npc);
@@ -243,7 +244,7 @@ public class Verzik extends Room
 	@Subscribe
 	public void onGameObjectSpawned(GameObjectSpawned gameObject)
 	{
-		if (verzikActive && verzikPhase == Phase.PHASE2)
+		if (verzikActive && verzikPhase == Phase.PHASE2 && gameObject.getGameObject().getId() == ObjectID.VERZIK_ACID_POOL)
 		{
 			verzikPoisonTiles.add(new VerzikPoisonTile(WorldPoint.fromLocal(client, gameObject.getTile().getLocalLocation())));
 		}
@@ -255,15 +256,15 @@ public class Verzik extends Room
 		NPC npc = npcDespawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.NYLOCAS_ISCHYROS_8381:
-			case NpcID.NYLOCAS_HAGIOS_8383:
-			case NpcID.NYLOCAS_TOXOBOLOS_8382:
+			case NpcID.VERZIK_NYLOCAS_MELEE:
+			case NpcID.VERZIK_NYLOCAS_MAGIC:
+			case NpcID.VERZIK_NYLOCAS_RANGED:
 			case 10858:
 			case 10859:
 			case 10860:
 				verzikAggros.remove(npc);
 				break;
-			case NpcID.NYLOCAS_MATOMENOS_8385:
+			case NpcID.TOB_VERZIK_PHASE2_BLOODNYLOCAS:
 			case 10845:
 			case 10862:
 				verzikReds.remove(npc);
@@ -271,19 +272,19 @@ public class Verzik extends Room
 			case NPC_ID_TORNADO:
 			case 10846:
 			case 10863:
-				verzikTornadoes.remove(npc);
+				verzikTornadoes.removeIf(t -> t.getNpc() == npc);
 				if (verzikLocalTornado == npc)
 				{
 					verzikLocalTornado = null;
 				}
 				break;
-			case NpcID.VERZIK_VITUR_8369:
-			case NpcID.VERZIK_VITUR_8370:
-			case NpcID.VERZIK_VITUR_8371:
-			case NpcID.VERZIK_VITUR_8372:
-			case NpcID.VERZIK_VITUR_8373:
-			case NpcID.VERZIK_VITUR_8374:
-			case NpcID.VERZIK_VITUR_8375:
+			case NpcID.VERZIK_INITIAL:
+			case NpcID.VERZIK_PHASE1:
+			case NpcID.VERZIK_PHASE1_TO2_TRANSITION:
+			case NpcID.VERZIK_PHASE2:
+			case NpcID.VERZIK_PHASE2_TO3_TRANSITION:
+			case NpcID.VERZIK_PHASE3:
+			case NpcID.VERZIK_DEATH_BAT:
 			case 10830:
 			case 10831:
 			case 10832:
@@ -344,7 +345,7 @@ public class Verzik extends Room
 
 			if (verzikPhase == Phase.PHASE2)
 			{
-				if (verzikNPC.getId() == NpcID.VERZIK_VITUR_8372 || verzikNPC.getId() == 10833 || verzikNPC.getId() == 10850)
+				if (verzikNPC.getId() == NpcID.VERZIK_PHASE2 || verzikNPC.getId() == 10833 || verzikNPC.getId() == 10850)
 				{
 					for (Projectile projectile : client.getProjectiles())
 					{
@@ -425,7 +426,7 @@ public class Verzik extends Room
 				{
 					boolean foundYellow = false;
 
-					for (GraphicsObject object : client.getGraphicsObjects())
+					for (GraphicsObject object : client.getTopLevelWorldView().getGraphicsObjects())
 					{
 						if (object.getId() == 1595)
 						{
@@ -451,7 +452,7 @@ public class Verzik extends Room
 			{
 				switch (verzikNPC.getId())
 				{
-					case NpcID.VERZIK_VITUR_8370:
+					case NpcID.VERZIK_PHASE1:
 					case 10831:
 					case 10848:
 						verzikPhase = Phase.PHASE1;
@@ -459,7 +460,7 @@ public class Verzik extends Room
 						verzikTicksUntilAttack = 18;
 						verzikTickPaused = false;
 						break;
-					case NpcID.VERZIK_VITUR_8372:
+					case NpcID.VERZIK_PHASE2:
 					case 10833:
 					case 10850:
 						verzikPhase = Phase.PHASE2;
@@ -467,7 +468,7 @@ public class Verzik extends Room
 						verzikTicksUntilAttack = 3;
 						verzikTickPaused = false;
 						break;
-					case NpcID.VERZIK_VITUR_8374:
+					case NpcID.VERZIK_PHASE3:
 					case 10835:
 					case 10852:
 						verzikPhase = Phase.PHASE3;
@@ -663,5 +664,7 @@ public class Verzik extends Room
 		verzikHardmodeSeenYellows = false;
 		verzikRangedAttacks.clear();
 		verzikLightningAttacks = 4;
+		lastPlayerLocation0 = null;
+		lastPlayerLocation1 = null;
 	}
 }

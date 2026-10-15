@@ -10,7 +10,7 @@ import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.api.GraphicsObject;
 import net.runelite.api.NPC;
-import net.runelite.api.NpcID;
+import net.runelite.api.gameval.NpcID;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.NpcDespawned;
@@ -88,12 +88,12 @@ public class Maiden extends Room
 		NPC npc = npcSpawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.THE_MAIDEN_OF_SUGADINTI:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8361:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8362:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8363:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8364:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8365:
+			case NpcID.TOB_MAIDEN_100:
+			case NpcID.TOB_MAIDEN_70:
+			case NpcID.TOB_MAIDEN_50:
+			case NpcID.TOB_MAIDEN_30:
+			case NpcID.TOB_MAIDEN_DYING_A:
+			case NpcID.TOB_MAIDEN_DYING_B:
 			case 10814:
 			case 10815:
 			case 10816:
@@ -110,12 +110,12 @@ public class Maiden extends Room
 				maidenActive = true;
 				maidenNPC = npc;
 				break;
-			case NpcID.BLOOD_SPAWN:
+			case NpcID.MAIDEN_BLOOD_SLUG:
 			case 10821:
 			case 10829:
 				maidenSpawns.add(npc);
 				break;
-			case NpcID.NYLOCAS_MATOMENOS:
+			case NpcID.MAIDEN_ELEMENTAL:
 			case 10820:
 			case 10828:
 				maidenReds.putIfAbsent(npc, new MutablePair<>(npc.getHealthRatio(), npc.getHealthScale()));
@@ -129,12 +129,12 @@ public class Maiden extends Room
 		NPC npc = npcDespawned.getNpc();
 		switch (npc.getId())
 		{
-			case NpcID.THE_MAIDEN_OF_SUGADINTI:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8361:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8362:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8363:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8364:
-			case NpcID.THE_MAIDEN_OF_SUGADINTI_8365:
+			case NpcID.TOB_MAIDEN_100:
+			case NpcID.TOB_MAIDEN_70:
+			case NpcID.TOB_MAIDEN_50:
+			case NpcID.TOB_MAIDEN_30:
+			case NpcID.TOB_MAIDEN_DYING_A:
+			case NpcID.TOB_MAIDEN_DYING_B:
 			case 10814:
 			case 10815:
 			case 10816:
@@ -150,14 +150,15 @@ public class Maiden extends Room
 				ticksUntilAttack = 0;
 				maidenActive = false;
 				maidenSpawns.clear();
+				maidenReds.clear();
 				maidenNPC = null;
 				break;
-			case NpcID.BLOOD_SPAWN:
+			case NpcID.MAIDEN_BLOOD_SLUG:
 			case 10821:
 			case 10829:
 				maidenSpawns.remove(npc);
 				break;
-			case NpcID.NYLOCAS_MATOMENOS:
+			case NpcID.MAIDEN_ELEMENTAL:
 			case 10820:
 			case 10828:
 				maidenReds.remove(npc);
@@ -185,7 +186,7 @@ public class Maiden extends Room
 
 		maidenBloodSplatters.clear();
 
-		for (GraphicsObject graphicsObject : client.getGraphicsObjects())
+		for (GraphicsObject graphicsObject : client.getTopLevelWorldView().getGraphicsObjects())
 		{
 			if (graphicsObject.getId() != GRAPHICSOBJECT_ID_MAIDEN)
 			{
@@ -210,7 +211,7 @@ public class Maiden extends Room
 			return col;
 		}
 
-		if (maidenNPC.getInteracting().getName().equals(client.getLocalPlayer().getName()))
+		if (maidenNPC.getInteracting() == client.getLocalPlayer())
 		{
 			return Color.ORANGE;
 		}
